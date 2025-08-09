@@ -3,10 +3,31 @@
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
 
+
 Stack de **observabilidade** para o projeto **Petshop**, utilizando **Prometheus**, **Grafana** e **Loki** para métricas e logs.  
 O **Jaeger** poderá ser integrado futuramente para tracing distribuído.
 
 ---
+
+## 📦 Serviços
+
+- **Prometheus**: Monitoramento de métricas
+- **Grafana**: Visualização de métricas e logs
+- **Loki**: Armazenamento e consulta de logs
+
+## 🚀 Subindo o ambiente
+
+```bash
+docker-compose up -d
+```
+
+## 🔍 Acessos
+- **Prometheus:** http://localhost:9090
+
+- **Grafana:** http://localhost:3000 (usuário: admin, senha: admin)
+
+- **Loki API:** http://localhost:3100
+>>>>>>> f3017aeaa87864d3c6adc9855f54b18c13a396fc
 
 ## 📂 Estrutura do repositório
 - `docker-compose.yml` → Serviços da stack de observabilidade
