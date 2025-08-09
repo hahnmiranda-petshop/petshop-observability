@@ -1,0 +1,49 @@
+name: PR Sanity
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  sanity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check PR title (Conventional-ish)
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "Title: $PR_TITLE"
+          if echo "$PR_TITLE" | grep -Eq '^(feat|fix|docs|style|refactor|test|chore)(\(.*\))?: .{5,}$'; then
+            echo "✅ Title OK"
+          else
+            echo "❌ Title must follow: <type>(optional scope): <description>"
+            exit 1
+          fi
+
+      - name: Require linked issue in PR body (Closes #123)
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if echo "$PR_BODY" | grep -Eq '(Closes|Fixes|Resolves) #[0-9]+'; then
+            echo "✅ Linked issue found"
+          else
+            echo "❌ Link an issue in the PR body using: Closes #<number>"
+            exit 1
+          fi
+
+      - name: Block large/binary artifacts by mistake
+        run: |
+          set -e
+          files=$(jq -r '.pull_request.number' <(echo '${{ toJson(github.event) }}') | xargs -I{}             gh api repos/${{ github.repository }}/pulls/{}/files --paginate --jq '.[].filename')
+          echo "$files" | sed '/^$/d' > changed_files.txt || true
+          echo "Changed files:"
+          cat changed_files.txt || true
+          if grep -E '(^|/)(.*\.(zip|jar|exe|dll|so|dmg|7z|rar))$' changed_files.txt; then
+            echo "❌ Binary or archive detected. Remove from PR or put in allowed locations."
+            exit 1
+          fi
+          echo "✅ No forbidden artifacts"
+        env:
+          GH_TOKEN: ${{ github.token }}
