@@ -17,12 +17,12 @@ Stack de observabilidade para o sistema Petshop, contendo **Prometheus**, **Graf
 docker-compose up -d
 ```
 
-##🔍 Acessos
-Prometheus: http://localhost:9090
+## 🔍 Acessos
+- **Prometheus:** http://localhost:9090
 
-Grafana: http://localhost:3000 (usuário: admin, senha: admin)
+- **Grafana:** http://localhost:3000 (usuário: admin, senha: admin)
 
-Loki API: http://localhost:3100
+- **Loki API:** http://localhost:3100
 
 ## 🔗 Links
 - [Repositório principal (petshop)](https://github.com/hahnmiranda-petshop/petshop)
