@@ -22,21 +22,36 @@ jobs:
             exit 1
           fi
 
-      - name: Require linked issue in PR body (Closes #123)
-        env:
-          PR_BODY: ${{ github.event.pull_request.body }}
-        run: |
-          if echo "$PR_BODY" | grep -Eq '(Closes|Fixes|Resolves) #[0-9]+'; then
-            echo "✅ Linked issue found"
-          else
-            echo "❌ Link an issue in the PR body using: Closes #<number>"
-            exit 1
-          fi
+      # Removido: validação que exigia Closes|Fixes|Resolves no corpo do PR
 
-      - name: Block large/binary artifacts by mistake
+      - name: Enforce commit message format <type>/#id: description
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -e
-          files=$(jq -r '.pull_request.number' <(echo '${{ toJson(github.event) }}') | xargs -I{}             gh api repos/${{ github.repository }}/pulls/{}/files --paginate --jq '.[].filename')
+          echo "Validating commit messages for PR #$PR_NUMBER in $REPO"
+          commits=$(gh api repos/$REPO/pulls/$PR_NUMBER/commits --paginate --jq '.[].commit.message | split("\n")[0]')
+          echo "$commits" | while IFS= read -r subject; do
+            [ -z "$subject" ] && continue
+            echo "→ $subject"
+            if echo "$subject" | grep -Eq '^(feat|fix|docs|style|refactor|test|chore|build|ci|perf|revert)/#([0-9]+): .{5,}$'; then
+              echo "   ✅ OK"
+            else
+              echo "   ❌ Commit subject must match: <type>/#<id>: <description>"
+              echo "      Example: docs/#15: add github workflow"
+              exit 1
+            fi
+          done
+
+      - name: Block large/binary artifacts by mistake
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          files=$(jq -r '.pull_request.number' <(echo '${{ toJson(github.event) }}') | xargs -I{} \
+            gh api repos/${{ github.repository }}/pulls/{}/files --paginate --jq '.[].filename')
           echo "$files" | sed '/^$/d' > changed_files.txt || true
           echo "Changed files:"
           cat changed_files.txt || true
@@ -45,5 +60,3 @@ jobs:
             exit 1
           fi
           echo "✅ No forbidden artifacts"
-        env:
-          GH_TOKEN: ${{ github.token }}
